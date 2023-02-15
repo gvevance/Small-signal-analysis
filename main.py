@@ -1,5 +1,6 @@
 # Symbolic solver
-# todo is_symbolic attribute for passives so that either the symbol or the numeric value can be used for this analysis. '''
+# todo 1. is_symbolic attribute for passives so that either the symbol or the numeric value can be used for this analysis. '''
+# todo 2. for filling matrix with impedances, I am going node by node. But for indep sources I am going source by source. Uniformity in logic would be good. (node by node is more logical)
 
 import numpy as np
 import sys
@@ -251,7 +252,7 @@ def form_matrices(nodes,sources,passives,dep_sources):
     for row_idx in range(1,num_of_nodes):       # GND not included
     # row_idx from 1 to num_of_nodes-1 => indirectly going over each node other than GND
         
-        print("Filling matrix with passives connected to node",row_idx)
+        # print("Filling matrix with passives connected to node",row_idx)
         
         for elem in passives:
             if elem.node1 == row_idx :
@@ -268,8 +269,8 @@ def form_matrices(nodes,sources,passives,dep_sources):
                 if col_idx != 0 :
                     M[row_idx,col_idx] -= 1/impedance_symbol
             
-        print(M)
-        print()
+        # print(M)
+        # print()
 
     for source in sources :
         
@@ -319,11 +320,15 @@ def form_matrices(nodes,sources,passives,dep_sources):
             control_node2 = source.control_node2
 
             if node1 != 0 :
-                M[node1]
+                row_idx = node1
+                M[row_idx,control_node1] += dep_source_symbol
+                M[row_idx,control_node2] -= dep_source_symbol
 
             if node2 != 0 :
-                M[node2,control_node1] -= dep_source_symbol
-            
+                row_idx = node2
+                M[row_idx,control_node1] -= dep_source_symbol
+                M[row_idx,control_node2] += dep_source_symbol
+
     return M,b
 
 
