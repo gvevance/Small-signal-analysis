@@ -128,6 +128,10 @@ def extract_nodes_and_elems(lines):
         node2 = words[2]
         identifier = words[0][0]
         name = words[0]
+        
+        control_node1,control_node2 = None,None                  # for dependent sources
+        if identifier in ['G','F','E','H'] :
+            control_node1,control_node2 = words[3],words[4]      # for dependent sources
 
         if node1 not in nodes:
             
@@ -147,6 +151,24 @@ def extract_nodes_and_elems(lines):
                 nodes[node2] = count
                 count += 1
         
+        if control_node1 != None and control_node1 not in nodes:
+            
+            if control_node1 == "GND" :
+                nodes[control_node1] = 0
+            
+            else :
+                nodes[control_node1] = count
+                count += 1
+
+        if control_node2 != None and control_node2 not in nodes:
+            
+            if control_node2 == "GND" :
+                nodes[control_node2] = 0
+            
+            else :
+                nodes[control_node2] = count
+                count += 1
+
         # passive elements
         if identifier in ['R','L','C'] :
             elem = passive_element(identifier,name,nodes[node1],nodes[node2],float(words[3]))
@@ -157,7 +179,11 @@ def extract_nodes_and_elems(lines):
             source = indep_source(identifier,name,nodes[node1],nodes[node2],acmag=float(words[4]),acphase=float(words[5]))
             #! acmag value float(words[5]) will be ignored and set to 0 for small signal analysis
             sources.append(source)
-            
+
+        elif identifier in ['G','H','E','F'] :
+            source = dep_source(identifier,name,nodes[node1],nodes[node2],nodes[control_node1],nodes[control_node2],value = float(words[5]))
+            dep_sources.append(source)
+
         else :
             print("Error in the following line : ")
             print(line)
@@ -295,7 +321,7 @@ def main():
         print()
 
     # solve spice netlist
-    nodes,passives,sources = extract_nodes_and_elems(lines)
+    nodes,passives,sources,dep_sources = extract_nodes_and_elems(lines)
 
     if verbose :
         print("\nNodes extracted : ")
