@@ -1,4 +1,5 @@
-# Assignment 2. Solving simple spice files
+# Symbolic solver
+# todo is_symbolic attribute for passives so that either the symbol or the numeric value can be used for this analysis. '''
 
 import numpy as np
 import sys
@@ -12,9 +13,7 @@ class passive_element :
     def __init__(self,type,name,node1,node2,value) :
         
         try :
-            if type in ["R","C","L"] :
-                self.type = type
-            else :
+            if type not in ["R","C","L"] :
                 print("Error in passive element definition. Aborting.")
                 exit()
             
@@ -28,6 +27,7 @@ class passive_element :
         self.name = name
         self.volage = None
         self.current = None
+        self.type = type
 
 
 class indep_source :
@@ -35,11 +35,7 @@ class indep_source :
     def __init__(self,type,name,node1,node2,acmag,acphase) :
         
         try :
-            if type in ["V","I"]:
-                self.acmag = acmag
-                self.acphase = acphase
-
-            else :
+            if type not in ["V","I"]:
                 print("Error in type entered.Aborting.")
                 exit()
         except :
@@ -49,23 +45,16 @@ class indep_source :
         self.node1 = node1
         self.node2 = node2
         self.name = name
+        self.acmag = acmag
+        self.acphase = acphase
 
 
 class dep_source :
 
-    def __init__(self,type,name,node1,node2) -> None:
+    def __init__(self,type,name,node1,node2,control_node1,control_node2,value) -> None:
         
         try :
-            if type == "G" :
-                pass
-            elif type == "H" :
-                pass
-            elif type == "E" :
-                pass
-            elif type == "F" :
-                pass
-            
-            else :
+            if type not in ["G","H","E","F"] :
                 print("Error in type entered.Aborting.")
                 exit()
         except :
@@ -74,6 +63,9 @@ class dep_source :
         self.source_type = type
         self.node1 = node1
         self.node2 = node2
+        self.control_node1 = control_node1
+        self.control_node2 = control_node2
+        self.value = value
         self.name = name
 
       
@@ -191,7 +183,7 @@ def extract_nodes_and_elems(lines):
             print("\nAborting.")
             exit()
 
-    return nodes,passives,sources
+    return nodes,passives,sources,dep_sources
 
 
 def get_impedance_symbol(type,name,s):
@@ -204,7 +196,11 @@ def get_impedance_symbol(type,name,s):
         return (s*sym.Symbol(name))
 
 
-def form_matrices(nodes,sources,passives):
+def get_dep_source_symbol (name) :
+    return sym.Symbol(name)
+
+
+def form_matrices(nodes,sources,passives,dep_sources):
     
     # define symbol for complex frequency
     s = sym.Symbol('s')
@@ -254,21 +250,26 @@ def form_matrices(nodes,sources,passives):
     
     for row_idx in range(1,num_of_nodes):       # GND not included
     # row_idx from 1 to num_of_nodes-1 => indirectly going over each node other than GND
-
+        
+        print("Filling matrix with passives connected to node",row_idx)
+        
         for elem in passives:
-            impedance_symbol = get_impedance_symbol(elem.type,elem.name,s)
             if elem.node1 == row_idx :
+                impedance_symbol = get_impedance_symbol(elem.type,elem.name,s)
                 M[row_idx,row_idx] += 1/impedance_symbol
                 col_idx = elem.node2
                 if col_idx != 0 :
                     M[row_idx,col_idx] -= 1/impedance_symbol
 
             if elem.node2 == row_idx :
-                M[row_idx,col_idx] += 1/impedance_symbol
+                impedance_symbol = get_impedance_symbol(elem.type,elem.name,s)
+                M[row_idx,row_idx] += 1/impedance_symbol
                 col_idx = elem.node1
                 if col_idx != 0 :
                     M[row_idx,col_idx] -= 1/impedance_symbol
-
+            
+        print(M)
+        print()
 
     for source in sources :
         
@@ -307,13 +308,29 @@ def form_matrices(nodes,sources,passives):
                 re,imag = source.acmag,0    #! acphase kept 0 for small signal analysis
                 b[node2] += (re + 1j*imag)  #!
 
+
+    for source in dep_sources :
+        
+        dep_source_symbol = get_dep_source_symbol(source.name)
+        if source.source_type == 'G' :
+            node1 = source.node1
+            node2 = source.node2
+            control_node1 = source.control_node1
+            control_node2 = source.control_node2
+
+            if node1 != 0 :
+                M[node1]
+
+            if node2 != 0 :
+                M[node2,control_node1] -= dep_source_symbol
+            
     return M,b
 
 
 def main():
 
     lines = get_lines()
-    verbose = False
+    verbose = True
     if verbose :
         print("\nPrinting relevant netlist lines :\n")
         for i in lines:
@@ -335,7 +352,7 @@ def main():
         for src in sources :
             print(f"{src.name} {src.node1} {src.node2} acmag={src.acmag} acphase={src.acphase}")    
 
-    M,b = form_matrices(nodes,sources,passives)
+    M,b = form_matrices(nodes,sources,passives,dep_sources)
     
     if verbose :
         print("Printing matrix M :")
