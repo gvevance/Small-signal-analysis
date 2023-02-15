@@ -51,6 +51,32 @@ class indep_source :
         self.name = name
 
 
+class dep_source :
+
+    def __init__(self,type,name,node1,node2) -> None:
+        
+        try :
+            if type == "G" :
+                pass
+            elif type == "H" :
+                pass
+            elif type == "E" :
+                pass
+            elif type == "F" :
+                pass
+            
+            else :
+                print("Error in type entered.Aborting.")
+                exit()
+        except :
+            print("Error in dependent source initialisation.")
+
+        self.source_type = type
+        self.node1 = node1
+        self.node2 = node2
+        self.name = name
+
+      
 def get_lines():
 
     pyfile = sys.argv[0]
@@ -90,6 +116,7 @@ def get_lines():
 def extract_nodes_and_elems(lines):
     
     sources = []
+    dep_sources = []
     passives = []
     nodes = {}  
 
@@ -248,11 +275,11 @@ def form_matrices(nodes,sources,passives):
             # independent current source
             if node1 != 0 :
                 re,imag = source.acmag,0    #! acphase kept 0 for small signal analysis
-                b[node1] += (re + 1j*imag)  #!
+                b[node1] -= (re + 1j*imag)  #!
                
             if node2 != 0 :
                 re,imag = source.acmag,0    #! acphase kept 0 for small signal analysis
-                b[node1] += (re + 1j*imag)  #!
+                b[node2] += (re + 1j*imag)  #!
 
     return M,b
 
