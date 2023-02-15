@@ -141,26 +141,6 @@ def extract_nodes_and_elems(lines):
     return nodes,passives,sources
 
 
-def get_impedance(type,value,frequency):
-    
-    try:
-        if type == "C" :
-            impedance = complex(0,-1/(2*np.pi*float(frequency)*value)) 
-        elif type == "L" :
-            impedance = complex(0,2*np.pi*float(frequency)*value)
-        elif type == "R" :
-            impedance = value
-        else :
-            print(f" Else clause inside try in get_impedance(..) triggered. Inputs provided : type : {type} value : {value} frequency : {frequency}")
-            return np.infty
-    except Exception as e:
-        print(f"Except clause of get_impedance(..) triggered. Inputs provided : type : {type} value : {value} frequency : {frequency}")
-        print(e)
-        return np.infty
-
-    return impedance
-
-
 def get_impedance_symbol(type,name,s):
     
     if type == 'R' :
