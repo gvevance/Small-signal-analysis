@@ -348,11 +348,11 @@ def form_matrices(nodes,sources,passives,dep_sources):
             # fill the matrix for the auxiliary variable used
             if node1 != 0 :
                 row_idx = node1
-                M[row_idx,dic_vcvs[source.name]] += 1 #! =1 (?)
+                M[row_idx,dic_vcvs[source.name]] = 1 #! =1 (?)
 
             if node2 != 0 :
                 row_idx = node2
-                M[row_idx,dic_vcvs[source.name]] -= 1 #! =-1 (?)
+                M[row_idx,dic_vcvs[source.name]] = 1 #! =-1 (?)
 
             # must fill the matrix with the equation of the VCVS itself
             row_idx = dic_vcvs[source.name] 
