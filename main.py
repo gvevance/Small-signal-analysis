@@ -246,6 +246,7 @@ def form_matrices(nodes,sources,passives,dep_sources):
             dic_vsources[source.name] = count
             count += 1
 
+    #! must check for correctness here. Commented out lines.
     # for source in sources :
     #      if source.source_type == 'I' :
     #         dic_isources[source.name] = count
@@ -338,6 +339,34 @@ def form_matrices(nodes,sources,passives,dep_sources):
                 M[row_idx,control_node1] -= dep_source_symbol
                 M[row_idx,control_node2] += dep_source_symbol
 
+        if source.source_type == "E" :
+            node1 = source.node1
+            node2 = source.node2
+            control_node1 = source.control_node1
+            control_node2 = source.control_node2
+
+            # fill the matrix for the auxiliary variable used
+            if node1 != 0 :
+                row_idx = node1
+                M[row_idx,dic_vcvs[source.name]] += 1 #! =1 (?)
+
+            if node2 != 0 :
+                row_idx = node2
+                M[row_idx,dic_vcvs[source.name]] -= 1 #! =-1 (?)
+
+            # must fill the matrix with the equation of the VCVS itself
+            row_idx = dic_vcvs[source.name] 
+            dep_source_symbol = get_dep_source_symbol(source.name)
+            
+            if node1 != 0 :
+                M[row_idx,node1] = 1
+            if node2 != 0 :
+                M[row_idx,node2] = -1
+            if control_node1 != 0 :
+                M[row_idx,control_node1] -= dep_source_symbol
+            if control_node2 != 0 :
+                M[row_idx,control_node2] += dep_source_symbol
+
     return M,b
 
 
@@ -377,7 +406,7 @@ def main():
     # solve for unknowns
     x = M.LUsolve(b)
     # sym.pprint((x[-2]),num_columns=100)
-    print(latex((x[-2])))   # todo : figure out some referencing mechanism instead of matrix indices
+    print(latex((x[4])))   # todo : figure out some referencing mechanism instead of matrix indices
 
 
 if __name__ == "__main__":
