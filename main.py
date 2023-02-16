@@ -1,10 +1,10 @@
 # Symbolic solver
 # todo 1. is_symbolic attribute for passives so that either the symbol or the numeric value can be used for this analysis. '''
-# todo 2. for filling matrix with impedances, I am going node by node. But for indep sources I am going source by source. Uniformity in logic would be good. (node by node is more logical)
+# todo 2. for filling matrix with impedances, I am going node by node. But for indep sources I am going source by source. Uniformity in logic would be good. (node by node is more logical but computationally much less efficient)
 
-import numpy as np
 import sys
 import sympy as sym
+import sympy.printing.latex as latex
 
 sym.init_printing(use_unicode=False, wrap_line=True)
 
@@ -335,7 +335,7 @@ def form_matrices(nodes,sources,passives,dep_sources):
 def main():
 
     lines = get_lines()
-    verbose = True
+    verbose = False
     if verbose :
         print("\nPrinting relevant netlist lines :\n")
         for i in lines:
@@ -367,7 +367,8 @@ def main():
 
     # solve for unknowns
     x = M.LUsolve(b)
-    sym.pprint((x))
+    # sym.pprint((x[-2]),num_columns=100)
+    print(latex((x[-2])))
 
 if __name__ == "__main__":
     main()
