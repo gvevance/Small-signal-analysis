@@ -113,7 +113,6 @@ def extract_nodes_and_elems(lines):
     passives = []
     nodes = {}  
 
-
     count = 1
     for line in lines:
         words = line.split()
@@ -213,7 +212,10 @@ def form_matrices(nodes,sources,passives,dep_sources):
 
     num_of_vsources = len([i for i in sources if i.source_type == "V"])    # each voltage source presents an unknown (current)
 
-    matrix_size = num_of_vsources + num_of_nodes
+    # added code for VCVS - auxiliary current variable required
+    num_of_vcvs = len([i for i in dep_sources if i.source_type == "E"])    # each VCVS presents an unknown (auxiliary current)
+
+    matrix_size = num_of_vsources + num_of_nodes + num_of_vcvs
     print(f"\nNumber of unknowns = {matrix_size}")
     print(f"Matrix size = {matrix_size}\n")
 
@@ -236,15 +238,22 @@ def form_matrices(nodes,sources,passives,dep_sources):
     
     dic_vsources = {}
     dic_isources = {}
+    dic_vcvs = {}
     count = num_of_nodes
+
     for source in sources :
         if source.source_type == 'V' :
             dic_vsources[source.name] = count
             count += 1
 
-    for source in sources :
-         if source.source_type == 'I' :
-            dic_isources[source.name] = count
+    # for source in sources :
+    #      if source.source_type == 'I' :
+    #         dic_isources[source.name] = count
+    #         count += 1
+    
+    for source in dep_sources :
+        if source.source_type == 'E' :
+            dic_vcvs[source.name] = count
             count += 1
 
     # scan through node-wise except GND filling up the matrix
@@ -335,7 +344,7 @@ def form_matrices(nodes,sources,passives,dep_sources):
 def main():
 
     lines = get_lines()
-    verbose = False
+    verbose = True
     if verbose :
         print("\nPrinting relevant netlist lines :\n")
         for i in lines:
@@ -368,7 +377,8 @@ def main():
     # solve for unknowns
     x = M.LUsolve(b)
     # sym.pprint((x[-2]),num_columns=100)
-    print(latex((x[-2])))
+    print(latex((x[-2])))   # todo : figure out some referencing mechanism instead of matrix indices
+
 
 if __name__ == "__main__":
     main()
