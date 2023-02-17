@@ -50,12 +50,12 @@ class indep_source :
         self.acphase = acphase
 
 
-class dep_source :
+class v_dep_source :
 
     def __init__(self,type,name,node1,node2,control_node1,control_node2,value) -> None:
         
         try :
-            if type not in ["G","H","E","F"] :
+            if type not in ["G","E"] :
                 print("Error in type entered.Aborting.")
                 exit()
         except :
@@ -66,6 +66,24 @@ class dep_source :
         self.node2 = node2
         self.control_node1 = control_node1
         self.control_node2 = control_node2
+        self.value = value
+        self.name = name
+
+class i_dep_source :
+
+    def __init__(self,type,name,node1,node2,controlling_vsource,value) -> None:
+        
+        try :
+            if type not in ["H","F"] :
+                print("Error in type entered.Aborting.")
+                exit()
+        except :
+            print("Error in dependent source initialisation.")
+
+        self.source_type = type
+        self.node1 = node1
+        self.node2 = node2
+        self.controlling_vsource = controlling_vsource
         self.value = value
         self.name = name
 
@@ -109,7 +127,8 @@ def get_lines():
 def extract_nodes_and_elems(lines):
     
     sources = []
-    dep_sources = []
+    v_dep_sources = []
+    i_dep_sources = []
     passives = []
     nodes = {}  
 
@@ -121,9 +140,14 @@ def extract_nodes_and_elems(lines):
         identifier = words[0][0]
         name = words[0]
         
-        control_node1,control_node2 = None,None                  # for dependent sources
-        if identifier in ['G','F','E','H'] :
+        control_node1,control_node2 = None,None                  # for voltage dependent sources
+        controlling_vsource = None                               # for current dependent sources
+        
+        if identifier in ['G','E'] :
             control_node1,control_node2 = words[3],words[4]      # for dependent sources
+
+        if identifier in ['F','H'] :
+            controlling_vsource = words[3]
 
         if node1 not in nodes:
             
@@ -172,9 +196,13 @@ def extract_nodes_and_elems(lines):
             #! acmag value float(words[5]) will be ignored and set to 0 for small signal analysis
             sources.append(source)
 
-        elif identifier in ['G','H','E','F'] :
-            source = dep_source(identifier,name,nodes[node1],nodes[node2],nodes[control_node1],nodes[control_node2],value = float(words[5]))
-            dep_sources.append(source)
+        elif identifier in ['G','E'] :
+            source = v_dep_source(identifier,name,nodes[node1],nodes[node2],nodes[control_node1],nodes[control_node2],value = float(words[5]))
+            v_dep_sources.append(source)
+
+        elif identifier in ['H','F'] :
+            source = i_dep_source(identifier,name,nodes[node1],nodes[node2],controlling_vsource,value = float(words[4]))
+            i_dep_sources.append(source)
 
         else :
             print("Error in the following line : ")
@@ -183,7 +211,7 @@ def extract_nodes_and_elems(lines):
             print("\nAborting.")
             exit()
 
-    return nodes,passives,sources,dep_sources
+    return nodes,passives,sources,v_dep_sources,i_dep_sources
 
 
 def get_impedance_symbol(type,name,s):
@@ -200,7 +228,7 @@ def get_dep_source_symbol (name) :
     return sym.Symbol(name)
 
 
-def form_matrices(nodes,sources,passives,dep_sources):
+def form_matrices(nodes,sources,passives,v_dep_sources,i_dep_sources):
     
     # define symbol for complex frequency
     s = sym.Symbol('s')
@@ -213,9 +241,10 @@ def form_matrices(nodes,sources,passives,dep_sources):
     num_of_vsources = len([i for i in sources if i.source_type == "V"])    # each voltage source presents an unknown (current)
 
     # added code for VCVS - auxiliary current variable required
-    num_of_vcvs = len([i for i in dep_sources if i.source_type == "E"])    # each VCVS presents an unknown (auxiliary current)
-
-    matrix_size = num_of_vsources + num_of_nodes + num_of_vcvs
+    num_of_vcvs = len([i for i in v_dep_sources if i.source_type == "E"])    # each VCVS presents an unknown (auxiliary current)
+    num_of_ccvs = len([i for i in i_dep_sources if i.source_type == "H"])
+    
+    matrix_size = num_of_vsources + num_of_nodes + num_of_vcvs + num_of_ccvs
     print(f"\nNumber of unknowns = {matrix_size}")
     print(f"Matrix size = {matrix_size}\n")
 
@@ -237,8 +266,9 @@ def form_matrices(nodes,sources,passives,dep_sources):
     M[0,0] = 1
     
     dic_vsources = {}
-    dic_isources = {}
+    # dic_isources = {}
     dic_vcvs = {}
+    dic_ccvs = {}
     count = num_of_nodes
 
     for source in sources :
@@ -252,9 +282,18 @@ def form_matrices(nodes,sources,passives,dep_sources):
     #         dic_isources[source.name] = count
     #         count += 1
     
-    for source in dep_sources :
+    for source in v_dep_sources :
         if source.source_type == 'E' :
             dic_vcvs[source.name] = count
+            count += 1
+
+        if source.source_type == "H" :
+            dic_ccvs[source.name] = count
+            count += 1
+
+    for source in i_dep_sources :
+        if source.source_type == 'H' :
+            dic_ccvs[source.name] = count
             count += 1
 
     # scan through node-wise except GND filling up the matrix
@@ -296,8 +335,7 @@ def form_matrices(nodes,sources,passives,dep_sources):
             if node2 != 0 :
                 M[node2,dic_vsources[source.name]] = -1
 
-            # voltage source equation
-            
+            # voltage source equation          
             if node1 != 0 :
                 M[dic_vsources[source.name],node1] = 1
             if node2 != 0 :
@@ -320,7 +358,7 @@ def form_matrices(nodes,sources,passives,dep_sources):
                 b[node2] += (re + 1j*imag)  #!
 
 
-    for source in dep_sources :
+    for source in v_dep_sources :
         
         dep_source_symbol = get_dep_source_symbol(source.name)
         if source.source_type == 'G' :
@@ -367,6 +405,31 @@ def form_matrices(nodes,sources,passives,dep_sources):
             if control_node2 != 0 :
                 M[row_idx,control_node2] += dep_source_symbol
 
+    for source in i_dep_sources :
+        if source.source_type == "H" :
+            node1 = source.node1
+            node2 = source.node2
+            controlling_vsource = source.controlling_vsource
+
+            # filling up wherever the auxiliary current appears in the M matrix
+            if node1 != 0 :
+                M[node1,dic_ccvs[source.name]] = 1
+
+            if node2 != 0 :
+                M[node2,dic_ccvs[source.name]] = -1
+
+            # writing the CCVS equation at the row given for CCVS equation
+            row_idx = dic_ccvs[source.name]
+            dep_source_symbol = get_dep_source_symbol(source.name)
+
+            if node1 != 0 :
+                M[row_idx,node1] = 1
+            if node2 != 0 :
+                M[row_idx,node2] = -1
+
+            M[row_idx,dic_vsources[controlling_vsource]] = -dep_source_symbol
+
+
     return M,b
 
 
@@ -381,7 +444,7 @@ def main():
         print()
 
     # solve spice netlist
-    nodes,passives,sources,dep_sources = extract_nodes_and_elems(lines)
+    nodes,passives,sources,v_dep_sources,i_dep_sources = extract_nodes_and_elems(lines)
 
     if verbose :
         print("\nNodes extracted : ")
@@ -395,7 +458,7 @@ def main():
         for src in sources :
             print(f"{src.name} {src.node1} {src.node2} acmag={src.acmag} acphase={src.acphase}")    
 
-    M,b = form_matrices(nodes,sources,passives,dep_sources)
+    M,b = form_matrices(nodes,sources,passives,v_dep_sources,i_dep_sources)
     
     if verbose :
         print("Printing matrix M :")
@@ -406,7 +469,7 @@ def main():
     # solve for unknowns
     x = M.LUsolve(b)
     # sym.pprint((x[-2]),num_columns=100)
-    print(latex((x[4])))   # todo : figure out some referencing mechanism instead of matrix indices
+    print(latex((x[-4])))   # todo : figure out some referencing mechanism instead of matrix indices
 
 
 if __name__ == "__main__":
