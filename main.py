@@ -287,9 +287,9 @@ def form_matrices(nodes,sources,passives,v_dep_sources,i_dep_sources):
             dic_vcvs[source.name] = count
             count += 1
 
-        if source.source_type == "H" :
-            dic_ccvs[source.name] = count
-            count += 1
+        # if source.source_type == "G" :
+        #     dic_vccs[source.name] = count
+        #     count += 1
 
     for source in i_dep_sources :
         if source.source_type == 'H' :
@@ -429,6 +429,8 @@ def form_matrices(nodes,sources,passives,v_dep_sources,i_dep_sources):
 
             M[row_idx,dic_vsources[controlling_vsource]] = -dep_source_symbol
 
+        if source.source_type == ['F']:
+            pass
 
     return M,b
 
@@ -436,7 +438,7 @@ def form_matrices(nodes,sources,passives,v_dep_sources,i_dep_sources):
 def main():
 
     lines = get_lines()
-    verbose = True
+    verbose = False
     if verbose :
         print("\nPrinting relevant netlist lines :\n")
         for i in lines:
@@ -469,7 +471,7 @@ def main():
     # solve for unknowns
     x = M.LUsolve(b)
     # sym.pprint((x[-2]),num_columns=100)
-    print(latex((x[-4])))   # todo : figure out some referencing mechanism instead of matrix indices
+    print(latex((x[-2])))   # todo : figure out some referencing mechanism instead of matrix indices
 
 
 if __name__ == "__main__":
