@@ -230,6 +230,9 @@ def get_dep_source_symbol (name) :
 
 def form_matrices(nodes,sources,passives,v_dep_sources,i_dep_sources):
     
+    # to back-reference variable names and expressions
+    reference_dic = {}
+
     # define symbol for complex frequency
     s = sym.Symbol('s')
 
@@ -271,9 +274,13 @@ def form_matrices(nodes,sources,passives,v_dep_sources,i_dep_sources):
     dic_ccvs = {}
     count = num_of_nodes
 
+    for i in range(count) :
+        reference_dic[f'node_{i}'] = i
+
     for source in sources :
         if source.source_type == 'V' :
             dic_vsources[source.name] = count
+            reference_dic['I_'+source.name] = count
             count += 1
 
     #! must check for correctness here. Commented out lines.
@@ -285,6 +292,7 @@ def form_matrices(nodes,sources,passives,v_dep_sources,i_dep_sources):
     for source in v_dep_sources :
         if source.source_type == 'E' :
             dic_vcvs[source.name] = count
+            reference_dic['I_'+source.name] = count
             count += 1
 
         # if source.source_type == "G" :
@@ -294,6 +302,7 @@ def form_matrices(nodes,sources,passives,v_dep_sources,i_dep_sources):
     for source in i_dep_sources :
         if source.source_type == 'H' :
             dic_ccvs[source.name] = count
+            reference_dic['I_'+source.name] = count
             count += 1
 
     # scan through node-wise except GND filling up the matrix
@@ -406,6 +415,8 @@ def form_matrices(nodes,sources,passives,v_dep_sources,i_dep_sources):
                 M[row_idx,control_node2] += dep_source_symbol
 
     for source in i_dep_sources :
+
+        dep_source_symbol = get_dep_source_symbol(source.name)
         if source.source_type == "H" :
             node1 = source.node1
             node2 = source.node2
@@ -420,7 +431,6 @@ def form_matrices(nodes,sources,passives,v_dep_sources,i_dep_sources):
 
             # writing the CCVS equation at the row given for CCVS equation
             row_idx = dic_ccvs[source.name]
-            dep_source_symbol = get_dep_source_symbol(source.name)
 
             if node1 != 0 :
                 M[row_idx,node1] = 1
@@ -434,14 +444,12 @@ def form_matrices(nodes,sources,passives,v_dep_sources,i_dep_sources):
             node2 = source.node2
             controlling_vsource = source.controlling_vsource
 
-            dep_source_symbol = get_dep_source_symbol(source.name)
-
             if node1 != 0 :
                 M[node1,dic_vsources[controlling_vsource]] += dep_source_symbol
             if node2 != 0 :
                 M[node2,dic_vsources[controlling_vsource]] -= dep_source_symbol
 
-    return M,b
+    return M,b,reference_dic
 
 
 def main():
@@ -469,7 +477,7 @@ def main():
         for src in sources :
             print(f"{src.name} {src.node1} {src.node2} acmag={src.acmag} acphase={src.acphase}")    
 
-    M,b = form_matrices(nodes,sources,passives,v_dep_sources,i_dep_sources)
+    M,b,reference_dic = form_matrices(nodes,sources,passives,v_dep_sources,i_dep_sources)
     
     if verbose :
         print("Printing matrix M :")
@@ -480,7 +488,11 @@ def main():
     # solve for unknowns
     x = M.LUsolve(b)
     # sym.pprint((x[-2]),num_columns=100)
-    print(latex((x)))   # todo : figure out some referencing mechanism instead of matrix indices
+    
+    for item in reference_dic :
+        print(item,reference_dic[item])
+
+    print(latex((x[4])))   # todo : figure out some referencing mechanism instead of matrix indices
 
 
 if __name__ == "__main__":
