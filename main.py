@@ -429,8 +429,17 @@ def form_matrices(nodes,sources,passives,v_dep_sources,i_dep_sources):
 
             M[row_idx,dic_vsources[controlling_vsource]] = -dep_source_symbol
 
-        if source.source_type == ['F']:
-            pass
+        if source.source_type == 'F':
+            node1 = source.node1
+            node2 = source.node2
+            controlling_vsource = source.controlling_vsource
+
+            dep_source_symbol = get_dep_source_symbol(source.name)
+
+            if node1 != 0 :
+                M[node1,dic_vsources[controlling_vsource]] += dep_source_symbol
+            if node2 != 0 :
+                M[node2,dic_vsources[controlling_vsource]] -= dep_source_symbol
 
     return M,b
 
@@ -471,7 +480,7 @@ def main():
     # solve for unknowns
     x = M.LUsolve(b)
     # sym.pprint((x[-2]),num_columns=100)
-    print(latex((x[-2])))   # todo : figure out some referencing mechanism instead of matrix indices
+    print(latex((x)))   # todo : figure out some referencing mechanism instead of matrix indices
 
 
 if __name__ == "__main__":
