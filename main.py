@@ -214,18 +214,33 @@ def extract_nodes_and_elems(lines):
     return nodes,passives,sources,v_dep_sources,i_dep_sources
 
 
-def get_impedance_symbol(type,name,s):
+def get_impedance_symbol(type,name,value,s,view='symbol'):
     
-    if type == 'R' :
+    if view == 'symbol' :
+        if type == 'R' :
+            return sym.Symbol(name)
+        elif type == 'C' :
+            return 1/(s*sym.Symbol(name))
+        elif type == 'L' :
+            return (s*sym.Symbol(name))
+
+    elif view == 'value' :
+        if type == 'R' :
+            # return sym.Symbol(name)
+            return value
+        elif type == 'C' :
+            # return 1/(s*sym.Symbol(name))
+            return 1/(s*value)
+        elif type == 'L' :
+            # return (s*sym.Symbol(name))
+            return (s*value)
+
+
+def get_dep_source_symbol (name,value,view='symbol') :
+    if view == 'symbol' :
         return sym.Symbol(name)
-    elif type == 'C' :
-        return 1/(s*sym.Symbol(name))
-    elif type == 'L' :
-        return (s*sym.Symbol(name))
-
-
-def get_dep_source_symbol (name) :
-    return sym.Symbol(name)
+    elif view == 'value' :
+        return value
 
 
 def form_matrices(nodes,sources,passives,v_dep_sources,i_dep_sources):
@@ -313,15 +328,14 @@ def form_matrices(nodes,sources,passives,v_dep_sources,i_dep_sources):
         # print("Filling matrix with passives connected to node",row_idx)
         
         for elem in passives:
+            impedance_symbol = get_impedance_symbol(elem.type,elem.name,elem.value,s,view='value')
             if elem.node1 == row_idx :
-                impedance_symbol = get_impedance_symbol(elem.type,elem.name,s)
                 M[row_idx,row_idx] += 1/impedance_symbol
                 col_idx = elem.node2
                 if col_idx != 0 :
                     M[row_idx,col_idx] -= 1/impedance_symbol
 
             if elem.node2 == row_idx :
-                impedance_symbol = get_impedance_symbol(elem.type,elem.name,s)
                 M[row_idx,row_idx] += 1/impedance_symbol
                 col_idx = elem.node1
                 if col_idx != 0 :
@@ -369,7 +383,7 @@ def form_matrices(nodes,sources,passives,v_dep_sources,i_dep_sources):
 
     for source in v_dep_sources :
         
-        dep_source_symbol = get_dep_source_symbol(source.name)
+        dep_source_symbol = get_dep_source_symbol(source.name,source.value,view='value')
         if source.source_type == 'G' :
             node1 = source.node1
             node2 = source.node2
@@ -403,7 +417,7 @@ def form_matrices(nodes,sources,passives,v_dep_sources,i_dep_sources):
 
             # must fill the matrix with the equation of the VCVS itself
             row_idx = dic_vcvs[source.name] 
-            dep_source_symbol = get_dep_source_symbol(source.name)
+            # dep_source_symbol = get_dep_source_symbol(source.name)
             
             if node1 != 0 :
                 M[row_idx,node1] = 1
@@ -416,7 +430,7 @@ def form_matrices(nodes,sources,passives,v_dep_sources,i_dep_sources):
 
     for source in i_dep_sources :
 
-        dep_source_symbol = get_dep_source_symbol(source.name)
+        dep_source_symbol = get_dep_source_symbol(source.name,source.value,view='value')
         if source.source_type == "H" :
             node1 = source.node1
             node2 = source.node2
@@ -489,6 +503,7 @@ def main():
     x = M.LUsolve(b)
     for item in reference_dic :
         print(item,reference_dic[item])
+    print()
 
     # sym.pprint((x[-2]),num_columns=100)    
     # print(latex((x)))
