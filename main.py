@@ -275,7 +275,7 @@ def form_matrices(nodes,sources,passives,v_dep_sources,i_dep_sources):
     count = num_of_nodes
 
     for i in range(count) :
-        reference_dic[f'node_{i}'] = i
+        reference_dic[f'V_node_{i}'] = i
 
     for source in sources :
         if source.source_type == 'V' :
@@ -487,13 +487,17 @@ def main():
 
     # solve for unknowns
     x = M.LUsolve(b)
-    # sym.pprint((x[-2]),num_columns=100)
-    
     for item in reference_dic :
         print(item,reference_dic[item])
 
-    print(latex((x[4])))   # todo : figure out some referencing mechanism instead of matrix indices
-
+    # sym.pprint((x[-2]),num_columns=100)    
+    # print(latex((x)))
+    
+    solution = {}
+    for item in reference_dic :
+        solution[item] = x[reference_dic[item]]
+        
+    print(latex(solution['V_node_3']))
 
 if __name__ == "__main__":
     main()
