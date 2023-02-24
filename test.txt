@@ -1,0 +1,6 @@
+Test
+.circuit
+V1 1 GND ac 1 0
+R1 1 2 100
+R2 2 GND 100
+.end

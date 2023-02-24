@@ -328,7 +328,7 @@ def form_matrices(nodes,sources,passives,v_dep_sources,i_dep_sources):
         # print("Filling matrix with passives connected to node",row_idx)
         
         for elem in passives:
-            impedance_symbol = get_impedance_symbol(elem.type,elem.name,elem.value,s,view='value')
+            impedance_symbol = get_impedance_symbol(elem.type,elem.name,elem.value,s,view='symbol')
             if elem.node1 == row_idx :
                 M[row_idx,row_idx] += 1/impedance_symbol
                 col_idx = elem.node2
@@ -383,7 +383,7 @@ def form_matrices(nodes,sources,passives,v_dep_sources,i_dep_sources):
 
     for source in v_dep_sources :
         
-        dep_source_symbol = get_dep_source_symbol(source.name,source.value,view='value')
+        dep_source_symbol = get_dep_source_symbol(source.name,source.value,view='symbol')
         if source.source_type == 'G' :
             node1 = source.node1
             node2 = source.node2
@@ -430,7 +430,7 @@ def form_matrices(nodes,sources,passives,v_dep_sources,i_dep_sources):
 
     for source in i_dep_sources :
 
-        dep_source_symbol = get_dep_source_symbol(source.name,source.value,view='value')
+        dep_source_symbol = get_dep_source_symbol(source.name,source.value,view='symbol')
         if source.source_type == "H" :
             node1 = source.node1
             node2 = source.node2
@@ -512,7 +512,7 @@ def main():
     for item in reference_dic :
         solution[item] = x[reference_dic[item]]
         
-    print(latex(solution['V_node_3']))
+    print(latex(solution['V_node_2']))
 
 if __name__ == "__main__":
     main()
