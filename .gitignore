@@ -6,3 +6,4 @@ test*.netlist
 *test.ipynb
 .vscode/launch.json
 main_copy_v1.py
+test.txt
