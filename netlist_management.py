@@ -9,11 +9,11 @@ def get_lines():
 
     pyfile = sys.argv[0]
 
-    if len(sys.argv) != 2 :
-        print(f"Usage : python3 {pyfile} <netlist file>")
+    if len(sys.argv) not in [2,3] :
+        print(f"Usage : python3 {pyfile} <netlist file> <optional config file>")
         exit()
 
-    netlist = sys.argv[1]
+    netlist = sys.argv[1]     
     with open(netlist) as file :
         line_list = file.readlines()
 
