@@ -272,10 +272,10 @@ def form_matrices(nodes,sources,passives,v_dep_sources,i_dep_sources,config_dic)
     return M,b,reference_dic
 
 
-def solve() :
+def solve(verbose=False) :
     
     lines = get_lines()
-    verbose = False
+    # verbose = False
     if verbose :
         print("\nPrinting relevant netlist lines :\n")
         for i in lines:

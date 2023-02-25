@@ -5,7 +5,7 @@
 from analysis_helper import solve
 
 def main():
-    solve()
+    solve(verbose=False)
 
 if __name__ == "__main__":
     main()
