@@ -3,7 +3,7 @@ import sympy as sym
 from netlist_management import get_lines
 from netlist_management import extract_nodes_and_elems
 from config_management import return_config_dic
-import sympy.printing.latex as latex
+# import sympy.printing.latex as latex
 
 # sym.init_printing(use_unicode=False, wrap_line=True)
 
@@ -182,8 +182,8 @@ def form_matrices(nodes,sources,passives,v_dep_sources,i_dep_sources,config_dic)
     for source in v_dep_sources :
         
         view = 'symbol'
-        if config_dic != None and elem.name in config_dic :
-            view = config_dic[elem.name]
+        if config_dic != None and source.name in config_dic :
+            view = config_dic[source.name]
 
         dep_source_symbol = get_dep_source_symbol(source.name,source.value,view=view)
         if source.source_type == 'G' :
