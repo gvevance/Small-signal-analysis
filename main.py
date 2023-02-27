@@ -5,7 +5,9 @@
 from analysis_helper import solve
 
 def main():
-    solve(verbose=False)
+    solution = solve(verbose=False)
+    for item in solution :
+        print (item," = ",solution[item])
 
 if __name__ == "__main__":
     main()

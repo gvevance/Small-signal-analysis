@@ -319,4 +319,5 @@ def solve(verbose=False) :
     for item in reference_dic :
         solution[item] = x[reference_dic[item]]
         
-    print(latex(solution['V_node_2']))
+    # print(latex(solution['V_node_2']))
+    return solution
