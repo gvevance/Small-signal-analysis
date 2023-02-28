@@ -301,9 +301,9 @@ def solve(verbose=False) :
     M,b,reference_dic = form_matrices(nodes,sources,passives,v_dep_sources,i_dep_sources,config_dic)
     
     if verbose :
-        print("Printing matrix M :")
+        print("\nPrinting matrix M :")
         print(M)
-        print("Printing matrix b :")
+        print("\nPrinting matrix b :")
         print(b)
 
     # solve for unknowns
