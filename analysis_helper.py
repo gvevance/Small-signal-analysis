@@ -3,28 +3,28 @@ import sympy as sym
 from netlist_management import get_lines
 from netlist_management import extract_nodes_and_elems
 from config_management import return_config_dic
-import sympy.printing.latex as latex
+# import sympy.printing.latex as latex
 
 # sym.init_printing(use_unicode=False, wrap_line=True)
 
-def get_impedance_symbol(type,name,value,s,view='symbol'):
+def get_impedance_symbol(type_,name,value,s,view='symbol'):
     
     if view == 'symbol' :
-        if type == 'R' :
+        if type_ == 'R' :
             return sym.Symbol(name)
-        elif type == 'C' :
+        elif type_ == 'C' :
             return 1/(s*sym.Symbol(name))
-        elif type == 'L' :
+        elif type_ == 'L' :
             return (s*sym.Symbol(name))
 
     elif view == 'value' :
-        if type == 'R' :
+        if type_ == 'R' :
             # return sym.Symbol(name)
             return value
-        elif type == 'C' :
+        elif type_ == 'C' :
             # return 1/(s*sym.Symbol(name))
             return 1/(s*value)
-        elif type == 'L' :
+        elif type_ == 'L' :
             # return (s*sym.Symbol(name))
             return (s*value)
 
@@ -126,7 +126,7 @@ def form_matrices(nodes,sources,passives,v_dep_sources,i_dep_sources,config_dic)
             if config_dic != None and elem.name in config_dic :
                 view = config_dic[elem.name]
             
-            impedance_symbol = get_impedance_symbol(elem.type,elem.name,elem.value,s,view=view)
+            impedance_symbol = get_impedance_symbol(elem.elem_type,elem.name,elem.value,s,view=view)
             if elem.node1 == row_idx :
                 M[row_idx,row_idx] += 1/impedance_symbol
                 col_idx = elem.node2
@@ -182,8 +182,8 @@ def form_matrices(nodes,sources,passives,v_dep_sources,i_dep_sources,config_dic)
     for source in v_dep_sources :
         
         view = 'symbol'
-        if config_dic != None and elem.name in config_dic :
-            view = config_dic[elem.name]
+        if config_dic != None and source.name in config_dic :
+            view = config_dic[source.name]
 
         dep_source_symbol = get_dep_source_symbol(source.name,source.value,view=view)
         if source.source_type == 'G' :
@@ -301,9 +301,9 @@ def solve(verbose=False) :
     M,b,reference_dic = form_matrices(nodes,sources,passives,v_dep_sources,i_dep_sources,config_dic)
     
     if verbose :
-        print("Printing matrix M :")
+        print("\nPrinting matrix M :")
         print(M)
-        print("Printing matrix b :")
+        print("\nPrinting matrix b :")
         print(b)
 
     # solve for unknowns
@@ -319,4 +319,5 @@ def solve(verbose=False) :
     for item in reference_dic :
         solution[item] = x[reference_dic[item]]
         
-    print(latex(solution['V_node_2']))
+    # print(latex(solution['V_node_2']))
+    return solution
