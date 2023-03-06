@@ -163,6 +163,8 @@ def form_matrices(nodes,sources,passives,v_dep_sources,i_dep_sources,config_dic)
                 M[dic_vsources[source.name],node2] = -1
             
             re,imag = source.acmag,0    #! acphase kept 0 for small signal analysis
+            if re == 1 :
+                re = sym.Symbol('1')
             b[dic_vsources[source.name]] += (re + 1j*imag)  #!
 
         elif source.source_type == "I" :
@@ -172,10 +174,14 @@ def form_matrices(nodes,sources,passives,v_dep_sources,i_dep_sources,config_dic)
             # independent current source
             if node1 != 0 :
                 re,imag = source.acmag,0    #! acphase kept 0 for small signal analysis
+                if re == 1 :
+                    re = sym.Symbol('1')
                 b[node1] -= (re + 1j*imag)  #!
                
             if node2 != 0 :
                 re,imag = source.acmag,0    #! acphase kept 0 for small signal analysis
+                if re == 1 :
+                    re = sym.Symbol('1')
                 b[node2] += (re + 1j*imag)  #!
 
 
@@ -317,7 +323,7 @@ def solve(verbose=False) :
     
     solution = {}
     for item in reference_dic :
-        solution[item] = x[reference_dic[item]]
+        solution[item] = x[reference_dic[item]].subs(sym.Symbol('1'),1)
         
     # print(latex(solution['V_node_2']))
     return solution
